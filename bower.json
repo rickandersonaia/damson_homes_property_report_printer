@@ -1,0 +1,18 @@
+{
+  "name": "damson-homes-property-report-generator",
+  "description": "Prints a formatted property report in PDF format including all media library attachments",
+  "license": "GPLv2",
+  "authors": [
+    "Rick Anderson"
+  ],
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+  }
+}
