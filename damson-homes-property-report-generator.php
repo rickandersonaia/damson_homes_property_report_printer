@@ -16,7 +16,6 @@
  * @package DH_Propery_Report_Generator
  * @version 0.0.1
  *
- * Built using generator-plugin-wp (https://github.com/WebDevStudios/generator-plugin-wp)
  */
 
 /**
@@ -37,27 +36,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-
-/**
- * Autoloads files with classes when needed.
- *
- * @since  0.0.1
- * @param  string $class_name Name of the class being requested.
- */
-function dhprg_autoload_classes( $class_name ) {
-
-	// If our class doesn't have our prefix, don't load it.
-	if ( 0 !== strpos( $class_name, 'DHPRG_' ) ) {
-		return;
-	}
-
-	// Set up our filename.
-	$filename = strtolower( str_replace( '_', '-', substr( $class_name, strlen( 'DHPRG_' ) ) ) );
-
-	// Include our file.
-	DH_Propery_Report_Generator::include_file( 'includes/class-' . $filename );
-}
-spl_autoload_register( 'dhprg_autoload_classes' );
 
 /**
  * Main initiation class.
@@ -137,36 +115,38 @@ final class DH_Propery_Report_Generator {
 		$this->basename = plugin_basename( __FILE__ );
 		$this->url      = plugin_dir_url( __FILE__ );
 		$this->path     = plugin_dir_path( __FILE__ );
+		define( 'DHPRGURL', $this->url );
+		define( 'MPDF_PATH', dirname( __FILE__ ) . '/includes/mpdf/' );
+
+		require_once( MPDF_PATH . 'mpdf.php' );
+		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
+
 	}
 
-	/**
-	 * Attach other plugin classes to the base plugin class.
-	 *
-	 * @since  0.0.1
-	 */
-	public function plugin_classes() {
-		// $this->plugin_class = new DHPRG_Plugin_Class( $this );
+	public function print_link() {
 
-	} // END OF PLUGIN CLASSES FUNCTION
+		$link   = apply_filters( 'the_permalink', get_permalink() ) . '?output=pdf';
+		$script = "\n<script>
+						function loadPDF(){
+						    window.open(\" $link \", '_blank')
+						}
+					</script>\n";
 
-	/**
-	 * Add hooks and filters.
-	 * Priority needs to be
-	 * < 10 for CPT_Core,
-	 * < 5 for Taxonomy_Core,
-	 * and 0 for Widgets because widgets_init runs at init priority 1.
-	 *
-	 * @since  0.0.1
-	 */
-	public function hooks() {
-		add_action( 'init', array( $this, 'init' ), 0 );
+		$link_text = " <a class=\"button cta has-icon pending\" href=\"$link\" target='_blank' onclick='loadPDF()'>"
+		             . dh_get_svg( array( 'icon' => 'pdf' ) ) . " Generate Summary</a>\n";
+
+		return $script . $link_text;
 	}
 
-	/**
-	 * Activate the plugin.
-	 *
-	 * @since  0.0.1
-	 */
+	public function start_report() {
+		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
+			$mpdf = new \mPDF();
+			$mpdf->WriteHTML( 'Hello World' );
+			$mpdf->Output();
+		}
+	}
+
+
 	public function _activate() {
 		// Bail early if requirements aren't met.
 		if ( ! $this->check_requirements() ) {
@@ -194,41 +174,9 @@ final class DH_Propery_Report_Generator {
 	 */
 	public function init() {
 
-		// Bail early if requirements aren't met.
-		if ( ! $this->check_requirements() ) {
-			return;
-		}
-
 		// Load translated strings for plugin.
 		load_plugin_textdomain( 'damson-homes-property-report-generator', false, dirname( $this->basename ) . '/languages/' );
 
-		// Initialize plugin classes.
-		$this->plugin_classes();
-	}
-
-	/**
-	 * Check if the plugin meets requirements and
-	 * disable it if they are not present.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @return boolean True if requirements met, false if not.
-	 */
-	public function check_requirements() {
-
-		// Bail early if plugin meets requirements.
-		if ( $this->meets_requirements() ) {
-			return true;
-		}
-
-		// Add a dashboard notice.
-		add_action( 'all_admin_notices', array( $this, 'requirements_not_met_notice' ) );
-
-		// Deactivate our plugin.
-		add_action( 'admin_init', array( $this, 'deactivate_me' ) );
-
-		// Didn't meet the requirements.
-		return false;
 	}
 
 	/**
@@ -243,47 +191,6 @@ final class DH_Propery_Report_Generator {
 		if ( function_exists( 'deactivate_plugins' ) ) {
 			deactivate_plugins( $this->basename );
 		}
-	}
-
-	/**
-	 * Check that all plugin requirements are met.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @return boolean True if requirements are met.
-	 */
-	public function meets_requirements() {
-
-		// Do checks for required classes / functions or similar.
-		// Add detailed messages to $this->activation_errors array.
-		return true;
-	}
-
-	/**
-	 * Adds a notice to the dashboard if the plugin requirements are not met.
-	 *
-	 * @since  0.0.1
-	 */
-	public function requirements_not_met_notice() {
-
-		// Compile default message.
-		$default_message = sprintf( __( 'Damson Homes Property Report Generator is missing requirements and has been <a href="%s">deactivated</a>. Please make sure all requirements are available.', 'damson-homes-property-report-generator' ), admin_url( 'plugins.php' ) );
-
-		// Default details to null.
-		$details = null;
-
-		// Add details if any exist.
-		if ( $this->activation_errors && is_array( $this->activation_errors ) ) {
-			$details = '<small>' . implode( '</small><br /><small>', $this->activation_errors ) . '</small>';
-		}
-
-		// Output errors.
-		?>
-		<div id="message" class="error">
-			<p><?php echo wp_kses_post( $default_message ); ?></p>
-			<?php echo wp_kses_post( $details ); ?>
-		</div>
-		<?php
 	}
 
 	/**
