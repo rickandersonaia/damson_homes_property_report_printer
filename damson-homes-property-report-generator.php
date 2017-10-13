@@ -119,12 +119,12 @@ final class DH_Propery_Report_Generator {
 		$this->path     = plugin_dir_path( __FILE__ );
 
 
-		define( 'MPDF_PATH', dirname( __FILE__ ) . '/includes/vendor/mpdf/' );
+		define( 'MPDF_PATH', $this->path . 'includes/vendor/mpdf/' );
+		define( 'INC_PATH', $this->path . 'includes/' );
 
-		require_once( $this->path . 'includes/dhprg_assemble_report.php' );
-		require_once( MPDF_PATH . 'vendor/autoload.php');
-//		require_once( MPDF_PATH . 'mpdf.php' );
-//		require_once( MPDF_PATH . 'vendor/setasign/autoload.php' );
+		require_once( INC_PATH . 'dhprg_assemble_report.php' );
+		require_once( INC_PATH . 'vendor/autoload.php');
+		require_once(INC_PATH . 'vendor/src/autoload.php');
 
 		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
 	}
@@ -153,12 +153,12 @@ final class DH_Propery_Report_Generator {
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
 			$output = new dhprg_assemble_report($this->post_id);
 			$html = $output->assemble_report();
-			$mpdf = new \mPDF();
-			$mpdf->SetImportUse();
-			$pagecount = $mpdf->SetSourceFile("/nas/content/staging/selltodamson/wp-content/uploads/2017/01/MapSearch-20170113-152832.pdf");
+			$mpdf = new \Mpdf\Mpdf();
+//			$mpdf->SetImportUse();
+//			$pagecount = $mpdf->SetSourceFile("/nas/content/staging/selltodamson/wp-content/uploads/2017/01/MapSearch-20170113-152832.pdf");
 // Import the last page of the source PDF file
-			$tplId = $mpdf->ImportPage($pagecount);
-			$mpdf->UseTemplate($tplId);
+//			$tplId = $mpdf->ImportPage($pagecount);
+//			$mpdf->UseTemplate($tplId);
 			$mpdf->WriteHTML( $html );
 			$mpdf->Output();
 		}
