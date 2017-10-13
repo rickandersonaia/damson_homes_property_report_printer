@@ -1,0 +1,7 @@
+{
+    "require": {
+        "setasign/fpdf": "^1.8",
+        "setasign/fpdi": "^2.0",
+        "spipu/html2pdf": "^5.0.1"
+    }
+}

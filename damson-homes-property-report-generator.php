@@ -42,6 +42,8 @@
  *
  * @since  0.0.1
  */
+use \setasign\Fpdi;
+
 final class DH_Propery_Report_Generator {
 
 	/**
@@ -123,8 +125,8 @@ final class DH_Propery_Report_Generator {
 		define( 'INC_PATH', $this->path . 'includes/' );
 
 		require_once( INC_PATH . 'dhprg_assemble_report.php' );
-		require_once( INC_PATH . 'vendor/autoload.php');
-		require_once(INC_PATH . 'vendor/src/autoload.php');
+		require_once( INC_PATH . 'vendor/autoload.php' );
+		require_once( INC_PATH . 'vendor/src/autoload.php' );
 
 		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
 	}
@@ -151,16 +153,52 @@ final class DH_Propery_Report_Generator {
 		global $post;
 		$this->post_id = $post->ID;
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
-			$output = new dhprg_assemble_report($this->post_id);
-			$html = $output->assemble_report();
-			$mpdf = new \Mpdf\Mpdf();
-//			$mpdf->SetImportUse();
-//			$pagecount = $mpdf->SetSourceFile("/nas/content/staging/selltodamson/wp-content/uploads/2017/01/MapSearch-20170113-152832.pdf");
-// Import the last page of the source PDF file
-//			$tplId = $mpdf->ImportPage($pagecount);
-//			$mpdf->UseTemplate($tplId);
-			$mpdf->WriteHTML( $html );
-			$mpdf->Output();
+
+
+
+			require_once( 'fpdf/fpdf.php' );
+			require_once( 'fpdi2/src/autoload.php' );
+
+// define some files to concatenate
+			$files = array(
+				'Boombastic-Box.pdf',
+				'Fantastic-Speaker.pdf',
+				'Noisy-Tube.pdf'
+			);
+
+// initiate FPDI
+			$pdf = new Fpdi\Fpdi();
+
+// iterate through the files
+			foreach ( $files AS $file ) {
+				// get the page count
+				$pageCount = $pdf->setSourceFile( $file );
+				// iterate through all pages
+				for ( $pageNo = 1; $pageNo <= $pageCount; $pageNo ++ ) {
+					// import a page
+					$templateId = $pdf->importPage( $pageNo );
+					// get the size of the imported page
+					$size = $pdf->getTemplateSize( $templateId );
+
+					// add a page with the same orientation and size
+					$pdf->AddPage( $size['orientation'], $size );
+
+					// use the imported page
+					$pdf->useTemplate( $templateId );
+
+					$pdf->SetFont( 'Helvetica' );
+					$pdf->SetXY( 5, 5 );
+					$pdf->Write( 8, 'A simple concatenation demo with FPDI' );
+				}
+			}
+
+// Output the new PDF
+			$pdf->Output();
+//			$output = new dhprg_assemble_report($this->post_id);
+//			$html = $output->assemble_report();
+//			$mpdf = new \Mpdf\Mpdf();
+//			$mpdf->WriteHTML( $html );
+//			$mpdf->Output();
 		}
 	}
 
@@ -217,6 +255,7 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 *
 	 * @param  string $field Field to get.
+	 *
 	 * @throws Exception     Throws an exception if the field is invalid.
 	 * @return mixed         Value of the field.
 	 */
@@ -239,11 +278,13 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 *
 	 * @param  string $path (optional) appended path.
+	 *
 	 * @return string       Directory and path.
 	 */
 	public static function dir( $path = '' ) {
 		static $dir;
 		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
+
 		return $dir . $path;
 	}
 
@@ -253,11 +294,13 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 *
 	 * @param  string $path (optional) appended path.
+	 *
 	 * @return string       URL and path.
 	 */
 	public static function url( $path = '' ) {
 		static $url;
 		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
+
 		return $url . $path;
 	}
 }
@@ -274,7 +317,7 @@ function dhprg() {
 }
 
 // Kick it off.
-add_action( 'plugins_loaded', 'dhprg');
+add_action( 'plugins_loaded', 'dhprg' );
 
 // Activation and deactivation.
 register_activation_hook( __FILE__, array( dhprg(), '_activate' ) );

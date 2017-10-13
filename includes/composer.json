@@ -1,6 +1,0 @@
-{
-    "require": {
-        "mpdf/mpdf": "^7.0.0-RC3",
-        "setasign/fpdi-fpdf": "^2.0"
-    }
-}
