@@ -119,12 +119,12 @@ final class DH_Propery_Report_Generator {
 		$this->path     = plugin_dir_path( __FILE__ );
 
 
-		define( 'MPDF_PATH', dirname( __FILE__ ) . '/includes/mpdf/' );
+		define( 'MPDF_PATH', dirname( __FILE__ ) . '/includes/vendor/mpdf/' );
 
 		require_once( $this->path . 'includes/dhprg_assemble_report.php' );
 		require_once( MPDF_PATH . 'vendor/autoload.php');
-		require_once( MPDF_PATH . 'mpdf.php' );
-		require_once( MPDF_PATH . 'vendor/setasign/autoload.php' );
+//		require_once( MPDF_PATH . 'mpdf.php' );
+//		require_once( MPDF_PATH . 'vendor/setasign/autoload.php' );
 
 		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
 	}
