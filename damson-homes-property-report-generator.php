@@ -76,6 +76,8 @@ final class DH_Propery_Report_Generator {
 	 */
 	protected $basename = '';
 
+	public $post_id = 0;
+
 	/**
 	 * Detailed activation error messages.
 	 *
@@ -115,15 +117,22 @@ final class DH_Propery_Report_Generator {
 		$this->basename = plugin_basename( __FILE__ );
 		$this->url      = plugin_dir_url( __FILE__ );
 		$this->path     = plugin_dir_path( __FILE__ );
-		define( 'DHPRGURL', $this->url );
+
+
 		define( 'MPDF_PATH', dirname( __FILE__ ) . '/includes/mpdf/' );
 
+		require_once( $this->path . 'includes/dhprg_assemble_report.php' );
+		require_once( MPDF_PATH . 'vendor/autoload.php');
 		require_once( MPDF_PATH . 'mpdf.php' );
-		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
+		require_once( MPDF_PATH . 'vendor/setasign/autoload.php' );
 
+		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
 	}
 
 	public function print_link() {
+//		$data = get_post_custom($this->post_id);
+//		$media = get_attached_media( 'application/pdf', $this->post_id );
+//		var_dump($media);
 
 		$link   = apply_filters( 'the_permalink', get_permalink() ) . '?output=pdf';
 		$script = "\n<script>
@@ -139,9 +148,18 @@ final class DH_Propery_Report_Generator {
 	}
 
 	public function start_report() {
+		global $post;
+		$this->post_id = $post->ID;
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
+			$output = new dhprg_assemble_report($this->post_id);
+			$html = $output->assemble_report();
 			$mpdf = new \mPDF();
-			$mpdf->WriteHTML( 'Hello World' );
+			$mpdf->SetImportUse();
+			$pagecount = $mpdf->SetSourceFile("/nas/content/staging/selltodamson/wp-content/uploads/2017/01/MapSearch-20170113-152832.pdf");
+// Import the last page of the source PDF file
+			$tplId = $mpdf->ImportPage($pagecount);
+			$mpdf->UseTemplate($tplId);
+			$mpdf->WriteHTML( $html );
 			$mpdf->Output();
 		}
 	}
@@ -216,22 +234,6 @@ final class DH_Propery_Report_Generator {
 	}
 
 	/**
-	 * Include a file from the includes directory.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $filename Name of the file to be included.
-	 * @return boolean          Result of include call.
-	 */
-	public static function include_file( $filename ) {
-		$file = self::dir( $filename . '.php' );
-		if ( file_exists( $file ) ) {
-			return include_once( $file );
-		}
-		return false;
-	}
-
-	/**
 	 * This plugin's directory.
 	 *
 	 * @since  0.0.1
@@ -272,7 +274,7 @@ function dhprg() {
 }
 
 // Kick it off.
-add_action( 'plugins_loaded', array( dhprg(), 'hooks' ) );
+add_action( 'plugins_loaded', 'dhprg');
 
 // Activation and deactivation.
 register_activation_hook( __FILE__, array( dhprg(), '_activate' ) );
