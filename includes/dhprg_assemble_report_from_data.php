@@ -6,8 +6,12 @@
  * Time: 9:29 AM
  */
 
+use Spipu\Html2Pdf\Html2Pdf;
+use Spipu\Html2Pdf\Exception\Html2PdfException;
+use Spipu\Html2Pdf\Exception\ExceptionFormatter;
 
-class dhprg_assemble_report {
+
+class dhprg_assemble_report_from_data {
 
 	public $post_id = 0;
 
@@ -23,7 +27,10 @@ class dhprg_assemble_report {
 			$address[ $segment ] = get_post_meta( $this->post_id, $segment, true );
 		}
 
-		$output = "<h1>$title</h1>\n\n";
+
+		$output = "<page backtop=\"25mm\" backbottom=\"19mm\" backleft=\"19mm\" backright=\"19mm\">";
+		$output .= "<page_header>Damson Homes Report</page_header>\n\n";
+		$output .= "<h1>$title</h1>\n\n";
 		$output .= "<h3>Contact Details</h3>\n";
 		$output .= "<ul>\n";
 		foreach ( $contact_details as $detail ) {
@@ -36,7 +43,24 @@ class dhprg_assemble_report {
 		$output .= "<li>{$address['ll_number']} {$address['ll_street']}, {$address['ll_area']}, {$address['ll_town']} </li>\n";
 		$output .= "<li>{$address['ll_postcode']} </li>\n";
 		$output .= "</ul>\n";
+		$output .= "<page_footer>Rick says Hi!</page_footer>";
+		$output .= "</page>";
 
 		return $output;
+	}
+
+	public function print_report(){
+		$output = $this->assemble_report();
+		try {
+
+			$content = $this->assemble_report();
+			$html2pdf = new Html2Pdf('P', 'A4', 'en');
+			$html2pdf->setDefaultFont('Arial');
+			$html2pdf->writeHTML($content);
+			$html2pdf->output('exemple00.pdf');
+		} catch (Html2PdfException $e) {
+			$formatter = new ExceptionFormatter($e);
+			echo $formatter->getHtmlMessage();
+		}
 	}
 }

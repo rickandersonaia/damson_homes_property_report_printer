@@ -42,6 +42,7 @@
  *
  * @since  0.0.1
  */
+
 use \setasign\Fpdi;
 
 final class DH_Propery_Report_Generator {
@@ -120,15 +121,14 @@ final class DH_Propery_Report_Generator {
 		$this->url      = plugin_dir_url( __FILE__ );
 		$this->path     = plugin_dir_path( __FILE__ );
 
-
-		define( 'MPDF_PATH', $this->path . 'includes/vendor/mpdf/' );
+		define( 'VENDOR_PATH', $this->path . 'vendor/' );
 		define( 'INC_PATH', $this->path . 'includes/' );
 
-		require_once( INC_PATH . 'dhprg_assemble_report.php' );
-		require_once( INC_PATH . 'vendor/autoload.php' );
-		require_once( INC_PATH . 'vendor/src/autoload.php' );
+		require_once( INC_PATH . 'dhprg_assemble_report_from_data.php' );
+		require_once( INC_PATH . 'dhprg_assemble_report_from_files.php' );
+		require_once( VENDOR_PATH . 'autoload.php' );
 
-		add_action( 'template_redirect', array( $this, 'start_report' ), 98 );
+		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
 	}
 
 	public function print_link() {
@@ -149,56 +149,17 @@ final class DH_Propery_Report_Generator {
 		return $script . $link_text;
 	}
 
-	public function start_report() {
+	public function build_report() {
 		global $post;
 		$this->post_id = $post->ID;
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
 
+//			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
+//			$report_from_files->test();
+			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
+			$report_from_data->print_report();
 
 
-			require_once( 'fpdf/fpdf.php' );
-			require_once( 'fpdi2/src/autoload.php' );
-
-// define some files to concatenate
-			$files = array(
-				'Boombastic-Box.pdf',
-				'Fantastic-Speaker.pdf',
-				'Noisy-Tube.pdf'
-			);
-
-// initiate FPDI
-			$pdf = new Fpdi\Fpdi();
-
-// iterate through the files
-			foreach ( $files AS $file ) {
-				// get the page count
-				$pageCount = $pdf->setSourceFile( $file );
-				// iterate through all pages
-				for ( $pageNo = 1; $pageNo <= $pageCount; $pageNo ++ ) {
-					// import a page
-					$templateId = $pdf->importPage( $pageNo );
-					// get the size of the imported page
-					$size = $pdf->getTemplateSize( $templateId );
-
-					// add a page with the same orientation and size
-					$pdf->AddPage( $size['orientation'], $size );
-
-					// use the imported page
-					$pdf->useTemplate( $templateId );
-
-					$pdf->SetFont( 'Helvetica' );
-					$pdf->SetXY( 5, 5 );
-					$pdf->Write( 8, 'A simple concatenation demo with FPDI' );
-				}
-			}
-
-// Output the new PDF
-			$pdf->Output();
-//			$output = new dhprg_assemble_report($this->post_id);
-//			$html = $output->assemble_report();
-//			$mpdf = new \Mpdf\Mpdf();
-//			$mpdf->WriteHTML( $html );
-//			$mpdf->Output();
 		}
 	}
 
@@ -231,7 +192,7 @@ final class DH_Propery_Report_Generator {
 	public function init() {
 
 		// Load translated strings for plugin.
-		load_plugin_textdomain( 'damson-homes-property-report-generator', false, dirname( $this->basename ) . '/languages/' );
+		load_plugin_textdomain( 'dhprg', false, dirname( $this->basename ) . '/languages/' );
 
 	}
 
