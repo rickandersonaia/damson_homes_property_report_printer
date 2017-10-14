@@ -54,7 +54,14 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 */
 	const VERSION = '0.0.1';
-
+	/**
+	 * Singleton instance of plugin.
+	 *
+	 * @var    DH_Propery_Report_Generator
+	 * @since  0.0.1
+	 */
+	protected static $single_instance = null;
+	public $post_id = 0;
 	/**
 	 * URL of plugin directory.
 	 *
@@ -62,7 +69,6 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 */
 	protected $url = '';
-
 	/**
 	 * Path of plugin directory.
 	 *
@@ -70,7 +76,6 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 */
 	protected $path = '';
-
 	/**
 	 * Plugin basename.
 	 *
@@ -78,9 +83,6 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 */
 	protected $basename = '';
-
-	public $post_id = 0;
-
 	/**
 	 * Detailed activation error messages.
 	 *
@@ -90,12 +92,25 @@ final class DH_Propery_Report_Generator {
 	protected $activation_errors = array();
 
 	/**
-	 * Singleton instance of plugin.
+	 * Sets up our plugin.
 	 *
-	 * @var    DH_Propery_Report_Generator
 	 * @since  0.0.1
 	 */
-	protected static $single_instance = null;
+	protected function __construct() {
+		$this->basename = plugin_basename( __FILE__ );
+		$this->url      = plugin_dir_url( __FILE__ );
+		$this->path     = plugin_dir_path( __FILE__ );
+
+		define( 'VENDOR_PATH', $this->path . 'vendor/' );
+		define( 'INC_PATH', $this->path . 'includes/' );
+		define( 'REPORT_PATH', WP_CONTENT_DIR . '/uploads/dh_property_reports/' );
+
+		require_once( INC_PATH . 'dhprg_assemble_report_from_data.php' );
+		require_once( INC_PATH . 'dhprg_assemble_report_from_files.php' );
+		require_once( VENDOR_PATH . 'autoload.php' );
+
+		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
+	}
 
 	/**
 	 * Creates or returns an instance of this class.
@@ -112,23 +127,35 @@ final class DH_Propery_Report_Generator {
 	}
 
 	/**
-	 * Sets up our plugin.
+	 * This plugin's directory.
 	 *
 	 * @since  0.0.1
+	 *
+	 * @param  string $path (optional) appended path.
+	 *
+	 * @return string       Directory and path.
 	 */
-	protected function __construct() {
-		$this->basename = plugin_basename( __FILE__ );
-		$this->url      = plugin_dir_url( __FILE__ );
-		$this->path     = plugin_dir_path( __FILE__ );
+	public static function dir( $path = '' ) {
+		static $dir;
+		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
 
-		define( 'VENDOR_PATH', $this->path . 'vendor/' );
-		define( 'INC_PATH', $this->path . 'includes/' );
+		return $dir . $path;
+	}
 
-		require_once( INC_PATH . 'dhprg_assemble_report_from_data.php' );
-		require_once( INC_PATH . 'dhprg_assemble_report_from_files.php' );
-		require_once( VENDOR_PATH . 'autoload.php' );
+	/**
+	 * This plugin's url.
+	 *
+	 * @since  0.0.1
+	 *
+	 * @param  string $path (optional) appended path.
+	 *
+	 * @return string       URL and path.
+	 */
+	public static function url( $path = '' ) {
+		static $url;
+		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
 
-		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
+		return $url . $path;
 	}
 
 	public function print_link() {
@@ -154,24 +181,47 @@ final class DH_Propery_Report_Generator {
 		$this->post_id = $post->ID;
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
 
-//			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
-//			$report_from_files->test();
-			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
-			$report_from_data->print_report();
+			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
+			$report_from_files->test_imagic();
+//			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
+//			$report_from_data->print_report();
 
 
 		}
 	}
 
-
 	public function _activate() {
-		// Bail early if requirements aren't met.
-		if ( ! $this->check_requirements() ) {
-			return;
-		}
+		$this->create_report_directory();
+	}
 
-		// Make sure any rewrite functionality has been loaded.
-		flush_rewrite_rules();
+	protected function create_report_directory(){
+		$access_type = get_filesystem_method();
+		if($access_type === 'direct'){
+			/* you can safely run request_filesystem_credentials() without any issues and don't need to worry about passing in a URL */
+			$creds = request_filesystem_credentials(site_url() . '/wp-admin/', '', false, false, array());
+
+			/* initialize the API */
+			if ( ! WP_Filesystem($creds) ) {
+				/* any problems and we exit */
+				return false;
+			}
+
+			global $wp_filesystem;
+			/* replace the 'direct' absolute path with the Filesystem API path */
+			$upload_path = str_replace(ABSPATH, $wp_filesystem->abspath(), WP_CONTENT_DIR . '/uploads/dh_property_reports/');
+
+			/* Now we can use $plugin_path in all our Filesystem API method calls */
+			if(!$wp_filesystem->is_dir($upload_path)){
+				/* directory didn't exist, so let's create it */
+				$wp_filesystem->mkdir($upload_path);
+				return;
+			}
+		}
+		else
+		{
+			/* don't have direct write access. Prompt user with our notice */
+			add_action('admin_notices', 'you_admin_notice_function');
+		}
 	}
 
 	/**
@@ -231,38 +281,6 @@ final class DH_Propery_Report_Generator {
 			default:
 				throw new Exception( 'Invalid ' . __CLASS__ . ' property: ' . $field );
 		}
-	}
-
-	/**
-	 * This plugin's directory.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       Directory and path.
-	 */
-	public static function dir( $path = '' ) {
-		static $dir;
-		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
-
-		return $dir . $path;
-	}
-
-	/**
-	 * This plugin's url.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       URL and path.
-	 */
-	public static function url( $path = '' ) {
-		static $url;
-		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
-
-		return $url . $path;
 	}
 }
 

@@ -13,6 +13,10 @@ use Spipu\Html2Pdf\Exception\ExceptionFormatter;
 
 class dhprg_assemble_report_from_data {
 
+	//@todo - refactor assemble report into template parts (header, content, footer)
+	//@todo - add css file
+	//@todo - switch to saving file - make a place to save - create a unique filename (title + timestamp?)
+
 	public $post_id = 0;
 
 	public function __construct( $post_id = 0 ) {
@@ -50,7 +54,6 @@ class dhprg_assemble_report_from_data {
 	}
 
 	public function print_report(){
-		$output = $this->assemble_report();
 		try {
 
 			$content = $this->assemble_report();
