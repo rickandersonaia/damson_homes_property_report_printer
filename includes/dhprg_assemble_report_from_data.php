@@ -13,17 +13,22 @@ use Spipu\Html2Pdf\Exception\ExceptionFormatter;
 
 class dhprg_assemble_report_from_data {
 
-	//@todo - refactor assemble report into template parts (header, content, footer)
-	//@todo - add css file
-	//@todo - switch to saving file - make a place to save - create a unique filename (title + timestamp?)
-
 	public $post_id = 0;
+	public $saved_path = '';
 
-	public function __construct( $post_id = 0 ) {
+	public function __construct( $post_id ) {
 		$this->post_id = $post_id;
 	}
 
-	public function assemble_report() {
+	protected function build_save_path(){
+		$post = get_post($this->post_id);
+		$name = $post->post_name;
+		return REPORT_PATH . "$name/damson_property_report_$name.pdf";
+	}
+
+	protected function assemble_report() {
+		$this->saved_path = $this->build_save_path();
+
 		$title            = get_the_title( $this->post_id );
 		$contact_details  = array( 'll_name', 'll_last_name', 'll_email', 'll_tel' );
 		$address_segments = array( 'll_number', 'll_street', 'll_area', 'll_town', 'll_postcode' );
@@ -60,7 +65,7 @@ class dhprg_assemble_report_from_data {
 			$html2pdf = new Html2Pdf('P', 'A4', 'en');
 			$html2pdf->setDefaultFont('Arial');
 			$html2pdf->writeHTML($content);
-			$html2pdf->output('exemple00.pdf');
+			$html2pdf->output($this->saved_path, 'F');
 		} catch (Html2PdfException $e) {
 			$formatter = new ExceptionFormatter($e);
 			echo $formatter->getHtmlMessage();

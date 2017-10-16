@@ -110,6 +110,7 @@ final class DH_Propery_Report_Generator {
 		require_once( INC_PATH . 'dhprg_create_directory.php' );
 		require_once( INC_PATH . 'dhprg_sort_attachment_pdfs.php' );
 		require_once( INC_PATH . 'dhprg_create_images_from_pdfs.php');
+		require_once( INC_PATH . 'dhprg_create_pdfs_from_images.php');
 		require_once( VENDOR_PATH . 'autoload.php' );
 
 		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
@@ -186,22 +187,28 @@ final class DH_Propery_Report_Generator {
 			$this->create_directory($post->post_name);
 			$sorted = new dhprg_sort_attachment_pdfs($post->ID);
 			$sorted_pdf_list = $sorted->get_sorted_pdfs();
+			$ready_paths = $sorted_pdf_list['ready'];
 			if(!empty($sorted_pdf_list['need_to_convert'])){
 				$images = new dhprg_create_images_from_pdfs($sorted_pdf_list['need_to_convert'], $post->post_name);
 				$images_to_convert = $images->get_images();
+				$pdf_from_image = new dhprg_create_pdfs_from_images($images_to_convert);
+				$converted_paths = $pdf_from_image->generate_pdfs();
 			}
+			$report_from_data = new dhprg_assemble_report_from_data( $post->ID );
+			$report_from_data->print_report();
 
-//			var_dump($images);
+			$all_pages[0] = $report_from_data->saved_path;
+			$files = array_merge($all_pages,$ready_paths, $converted_paths);
+
+			$report_from_files = new dhprg_assemble_report_from_files();
+			$report_from_files->assemble_report($files);
+//			var_dump();
 
 
-//			create images
-//			create pdfs from images
-//			create pdf form data
+//			create pdf from data
 //			assemble pdfs
-//			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
-//			$report_from_files->test_imagic();
-//			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
-//			$report_from_data->print_report();
+
+
 
 
 		}

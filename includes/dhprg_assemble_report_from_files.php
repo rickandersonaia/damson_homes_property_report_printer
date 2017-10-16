@@ -6,32 +6,18 @@
  * Time: 5:29 AM
  */
 
-//@todo - try using imagrick to create jpg of encrypted pdfs
 
 use \setasign\Fpdi;
 
 class dhprg_assemble_report_from_files {
 
-	public $post_id;
-
-	public function __construct( $post_id ) {
-		$this->post_id = $post_id;
-	}
-
-	public function test() {
-		$files    = $this->get_list_of_attached_pdf_paths();
-		if ( empty( $files ) ) {
-			return false;
-		}
+	public function assemble_report($files) {
 
 // initiate FPDI
 		$pdf = new Fpdi\Fpdi();
 
 // iterate through the files
 		foreach ( $files AS $file ) {
-			$not_encrypted = $this->test_for_encryption( $file );
-			if ( $not_encrypted ) {
-
 				// get the page count
 				$pageCount = $pdf->setSourceFile( $file );
 				// iterate through all pages
@@ -47,16 +33,13 @@ class dhprg_assemble_report_from_files {
 					// use the imported page
 					$pdf->useTemplate( $templateId );
 
-					$pdf->SetFont( 'Helvetica' );
+					$pdf->SetFont( 'Arial' );
 					$pdf->SetXY( 5, 5 );
 					$pdf->Write( 8, 'Damson Homes test' );
 				}
-			}
 		}
 
 // Output the new PDF
 		$pdf->Output();
 	}
-
-
 }
