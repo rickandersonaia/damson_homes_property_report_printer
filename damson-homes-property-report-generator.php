@@ -107,6 +107,7 @@ final class DH_Propery_Report_Generator {
 
 		require_once( INC_PATH . 'dhprg_assemble_report_from_data.php' );
 		require_once( INC_PATH . 'dhprg_assemble_report_from_files.php' );
+		require_once( INC_PATH . 'dhprg_create_directory.php' );
 		require_once( VENDOR_PATH . 'autoload.php' );
 
 		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
@@ -180,49 +181,32 @@ final class DH_Propery_Report_Generator {
 		global $post;
 		$this->post_id = $post->ID;
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
-
-			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
-			$report_from_files->test_imagic();
-//			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
-//			$report_from_data->print_report();
+			$this->create_directory($post->post_name);
+//          create project directory
+//			sort attachments into images or pdfs
+//			create images
+//			create pdfs from images
+//			create pdf form data
+//			assemble pdfs
+//			$report_from_files = new dhprg_assemble_report_from_files( $this->post_id );
+//			$report_from_files->test_imagic();
+			$report_from_data = new dhprg_assemble_report_from_data( $this->post_id);
+			$report_from_data->print_report();
 
 
 		}
+	}
+
+	public function create_directory($name){
+		$directory = new dhprg_create_directory("/dh_property_reports/$name/");
+		$directory->create_directory();
 	}
 
 	public function _activate() {
-		$this->create_report_directory();
+		$directory = new dhprg_create_directory('/dh_property_reports/');
+		$directory->create_directory();
 	}
 
-	protected function create_report_directory(){
-		$access_type = get_filesystem_method();
-		if($access_type === 'direct'){
-			/* you can safely run request_filesystem_credentials() without any issues and don't need to worry about passing in a URL */
-			$creds = request_filesystem_credentials(site_url() . '/wp-admin/', '', false, false, array());
-
-			/* initialize the API */
-			if ( ! WP_Filesystem($creds) ) {
-				/* any problems and we exit */
-				return false;
-			}
-
-			global $wp_filesystem;
-			/* replace the 'direct' absolute path with the Filesystem API path */
-			$upload_path = str_replace(ABSPATH, $wp_filesystem->abspath(), WP_CONTENT_DIR . '/uploads/dh_property_reports/');
-
-			/* Now we can use $plugin_path in all our Filesystem API method calls */
-			if(!$wp_filesystem->is_dir($upload_path)){
-				/* directory didn't exist, so let's create it */
-				$wp_filesystem->mkdir($upload_path);
-				return;
-			}
-		}
-		else
-		{
-			/* don't have direct write access. Prompt user with our notice */
-			add_action('admin_notices', 'you_admin_notice_function');
-		}
-	}
 
 	/**
 	 * Deactivate the plugin.
