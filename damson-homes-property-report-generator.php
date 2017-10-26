@@ -116,52 +116,13 @@ final class DH_Propery_Report_Generator {
 		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
 	}
 
-	/**
-	 * Creates or returns an instance of this class.
-	 *
-	 * @since   0.0.1
-	 * @return  DH_Propery_Report_Generator A single instance of this class.
-	 */
-	public static function get_instance() {
-		if ( null === self::$single_instance ) {
-			self::$single_instance = new self();
-		}
-
-		return self::$single_instance;
-	}
 
 	/**
-	 * This plugin's directory.
+	 * adds link to the page template
 	 *
+	 * @return string
 	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       Directory and path.
 	 */
-	public static function dir( $path = '' ) {
-		static $dir;
-		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
-
-		return $dir . $path;
-	}
-
-	/**
-	 * This plugin's url.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       URL and path.
-	 */
-	public static function url( $path = '' ) {
-		static $url;
-		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
-
-		return $url . $path;
-	}
-
 	public function print_link() {
 //		$data = get_post_custom($this->post_id);
 //		$media = get_attached_media( 'application/pdf', $this->post_id );
@@ -180,14 +141,22 @@ final class DH_Propery_Report_Generator {
 		return $script . $link_text;
 	}
 
+
+	/**
+	 *  main controller
+	 *
+	 * @since  0.0.1
+	 */
 	public function build_report() {
 		global $post;
 		$this->post_id = $post->ID;
+		$converted_paths = array();
+
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
 			$this->create_directory($post->post_name);
 			$sorted = new dhprg_sort_attachment_pdfs($post->ID);
 			$sorted_pdf_list = $sorted->get_sorted_pdfs();
-			$ready_paths = $sorted_pdf_list['ready'];
+			$ready_paths = !empty($sorted_pdf_list['ready']) ? $sorted_pdf_list['ready'] : array();
 			if(!empty($sorted_pdf_list['need_to_convert'])){
 				$images = new dhprg_create_images_from_pdfs($sorted_pdf_list['need_to_convert'], $post->post_name);
 				$images_to_convert = $images->get_images();
@@ -198,19 +167,11 @@ final class DH_Propery_Report_Generator {
 			$report_from_data->print_report();
 
 			$all_pages[0] = $report_from_data->saved_path;
-			$files = array_merge($all_pages,$ready_paths, $converted_paths);
+			$files = array_merge($all_pages, $ready_paths, $converted_paths);
+			//var_dump($files);
 
-			$report_from_files = new dhprg_assemble_report_from_files();
+			$report_from_files = new dhprg_assemble_report_from_files($post->ID);
 			$report_from_files->assemble_report($files);
-//			var_dump();
-
-
-//			create pdf from data
-//			assemble pdfs
-
-
-
-
 		}
 	}
 
@@ -260,6 +221,53 @@ final class DH_Propery_Report_Generator {
 			deactivate_plugins( $this->basename );
 		}
 	}
+
+	/**
+	 * Creates or returns an instance of this class.
+	 *
+	 * @since   0.0.1
+	 * @return  DH_Propery_Report_Generator A single instance of this class.
+	 */
+	public static function get_instance() {
+		if ( null === self::$single_instance ) {
+			self::$single_instance = new self();
+		}
+
+		return self::$single_instance;
+	}
+
+	/**
+	 * This plugin's directory.
+	 *
+	 * @since  0.0.1
+	 *
+	 * @param  string $path (optional) appended path.
+	 *
+	 * @return string       Directory and path.
+	 */
+	public static function dir( $path = '' ) {
+		static $dir;
+		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
+
+		return $dir . $path;
+	}
+
+	/**
+	 * This plugin's url.
+	 *
+	 * @since  0.0.1
+	 *
+	 * @param  string $path (optional) appended path.
+	 *
+	 * @return string       URL and path.
+	 */
+	public static function url( $path = '' ) {
+		static $url;
+		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
+
+		return $url . $path;
+	}
+
 
 	/**
 	 * Magic getter for our object.
