@@ -6,9 +6,7 @@
  * Time: 9:29 AM
  */
 
-use Spipu\Html2Pdf\Html2Pdf;
-use Spipu\Html2Pdf\Exception\Html2PdfException;
-use Spipu\Html2Pdf\Exception\ExceptionFormatter;
+use Dompdf\Dompdf;
 
 
 class dhprg_assemble_report_from_data {
@@ -47,97 +45,58 @@ class dhprg_assemble_report_from_data {
 		$img_id = get_post_thumbnail_id( $this->post_id );
 		if ( $img_id ) {
 			$slide_att = wp_get_attachment_image_src( $img_id, 'letterbox-small' );
+			$path = get_attached_file( $img_id );
 		}
 
 
 		// Start the output
 		$output = $this->output_css();
-
-		$output .= "<page backtop=\"25mm\" backbottom=\"19mm\" backleft=\"10mm\" backright=\"10mm\">";
-		$output .= "<page_header><img class=\"dh-logo\" src=\"https://s3-us-west-2.amazonaws.com/s.cdpn.io/15184/dh-logo-ls-600.png\"></page_header>\n\n";
 		$output .= "<div class=\"header\">\n";
 		$output .= "<p class=\"title\">$title</p>\n";
 		$output .= "<p class=\"address\">{$address['ll_number']} {$address['ll_street']}, {$address['ll_area']}, {$address['ll_town']}, {$address['ll_postcode']}</p>\n</div>\n";
 		if($img_id){
 			$output .= '<div class="ftr-image-wrap">';
-			$output .= '<img class="ftr-image" src="' . $slide_att[0] . '" width="' . $slide_att[1] . '" height="' . $slide_att[2] . '">';
+			$output .= '<img class="ftr-image" src="' . $path . '" width="' . $slide_att[1] . '" height="' . $slide_att[2] . '">';
 			$output .= '</div>';
 		}
-		$output .= '
-			    <table border="0" cellspacing="5" cellpadding="5" style="width:180px">
-			      <tbody>
-			        <tr>
-			          <th class="table-header" colspan="2">Heading</th>
-			        </tr>
-			        <tr>
-			          <td style="width:40%" align="left">
-			            <h4>Contact Details</h4>
+		$output .= "<div class='container'>";
+		$output .= "<div class='col-1'>";
+		$output .= '<h4>Contact Details</h4>
 			            <ul class="contact-details">
 			              <li class="cd-li"><strong>' . $fname . ( ! empty( $lname ) ? ' ' . $lname : '' ) . '</strong></li>';
 
 		foreach ( $contact_details as $detail ) {
 			$data = get_post_meta( $this->post_id, $detail, true );
 			if ( ! empty( $data ) ) {
-				$output .= "<li class=\"cd-li\">$data</li>\n";
+				$output .= "<li class='cd-li'>$data</li>\n";
 			}
 		}
 
-		$output .= '</ul>
-			
-			          </td>
-			          <td style="width:40%" align="right">right hand stuff</td>
-			        </tr>
-			      </tbody>
-			    </table>';
-		$output .= "<div class=\"container\">";
-		$output .= "<div class=\"col-1\">";
-		$output .= "<p>Left</p>";
+		$output .= '</ul>';
 		$output .= "</div>";
-		$output .= "<div class=\"col-2\">";
-		$output .= "<p>Right</p>";
+		$output .= "<div class='col-2'>";
+		$output .= "<p>right hand stuff</p>";
 		$output .= "</div>";
 		$output .= "<div style='clear:both'></div>";
 		$output .= "</div>";
-
-
-		//   $output .= '<div class="cd">';
-
-		// $output .= "<h4>Contact Details</h4>\n";
-		// $output .= "<ul class=\"contact-details\">\n";
-		// $output .= "<li class=\"cd-li\"><strong>" . $fname . (!empty($lname) ? ' ' . $lname : '') ."</strong></li>\n";
-
-
-		// foreach ( $contact_details as $detail ) {
-		// 	$data = get_post_meta( $this->post_id, $detail, true );
-		// 	if ( !empty( $data ) ) {
-		// 		$output .= "<li class=\"cd-li\">$data</li>\n";
-		// 	}
-		// }
-
-		// $output .= "<li>{$address['ll_number']} {$address['ll_street']}, {$address['ll_area']}, {$address['ll_town']} </li>\n";
-		// $output .= "<li>{$address['ll_postcode']} </li>\n";
-
-
-		// $output .= "</ul>\n";
-
-
-		// $output .= "<page_footer>Rick says Hi!</page_footer>";
-		$output .= "</page>";
 
 		return $output;
 	}
 
 	public function print_report() {
-		try {
+
 			$content  = $this->assemble_report();
-			$html2pdf = new Html2Pdf( 'P', 'A4', 'en' );
-			$html2pdf->setDefaultFont( 'Arial' );
-			$html2pdf->writeHTML( $content );
-			$html2pdf->output( $this->saved_path, 'F' );
-		} catch ( Html2PdfException $e ) {
-			$formatter = new ExceptionFormatter( $e );
-			echo $formatter->getHtmlMessage();
-		}
+			$dompdf = new Dompdf();
+			$dompdf->loadHtml($content);
+
+			// (Optional) Setup the paper size and orientation
+			$dompdf->setPaper('A4', 'portrait');
+
+			// Render the HTML as PDF
+			$dompdf->render();
+			// Output the generated PDF to Browser
+			$output = $dompdf->output();
+			file_put_contents($this->saved_path, $output);
 	}
 
 	public function output_css() {
@@ -148,14 +107,9 @@ class dhprg_assemble_report_from_data {
 		    .dh-logo {width: 40mm; margin-top: 5mm; margin-left: 80mm;} 		
 		    .header {border: solid 1px #AAA; background-color: #F0F0F0; padding: 5mm;} 		
 		    .title {font-size: 12pt; line-height: 18pt; color: #6B1C56; margin-bottom: 2pt;}
-		    .address {font-size: 12pt; line-height: 18pt; font-weight: bold;}		
-		    .ftr-image {width: 150mm; margin: 5mm 10mm;}		
-		    .width {background-color: #EEE; text-align: center; width: 180mm;}		
-		    table {background-color: yellow; width: 180mm !important;}		
-		    .table-header  {background-color: #AB8848; color: white; text-align: center;}		
-		    .table-1-2, .table-2-2 {width: 50%;}
-		    .col-1{width:40%;float:left;background-color:yellow;}
-		    .col-2{width:40%;float:right;background-color: blue;}
+		    .address {font-size: 12pt; line-height: 18pt; font-weight: bold;}	
+		    .col-1{width:50%;float:left;background-color:yellow;}
+		    .col-2{width:50%;float:left;background-color: blue;}
 		    .container{width:100%;background-color:red;}
         </style>\n";
 

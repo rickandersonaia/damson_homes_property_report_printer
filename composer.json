@@ -2,9 +2,9 @@
     "require": {
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.0",
-        "spipu/html2pdf": "^5.0.1",
         "setasign/fpdi-fpdf": "^2.0",
-        "setasign/fpdi_pdf-parser": "^2.0"
+        "setasign/fpdi_pdf-parser": "^2.0",
+        "dompdf/dompdf": "^0.8.1"
     },
 
     "repositories": [
