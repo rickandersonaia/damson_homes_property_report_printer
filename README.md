@@ -3,8 +3,8 @@
 **Donate link:**       https://github.com/rickandersonaia/damson_homes_property_report_printer  
 **Tags:**  
 **Requires at least:** 4.4  
-**Tested up to:**      4.8.1 
-**Stable tag:**        0.0.1  
+**Tested up to:**      4.8.3 
+**Stable tag:**        0.0.2  
 **License:**           GPLv2  
 **License URI:**       http://www.gnu.org/licenses/gpl-2.0.html  
 
@@ -16,6 +16,7 @@ Prints a formatted property report in PDF format including all media library att
 
 ### Manual Installation ###
 
+1. Clone this repository and run `php composer.phar install`
 1. Upload the entire `/damson-homes-property-report-generator` directory to the `/wp-content/plugins/` directory.
 2. Activate Damson Homes Property Report Generator through the 'Plugins' menu in WordPress.
 
@@ -26,6 +27,11 @@ Prints a formatted property report in PDF format including all media library att
 
 
 ## Changelog ##
+
+### 0.0.2 ###
+* Initial completed working copy 
+* using setasign FPDF and FPDI
+* using DOMPDF
 
 ### 0.0.1 ###
 * First release
