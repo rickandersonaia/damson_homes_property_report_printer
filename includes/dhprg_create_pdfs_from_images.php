@@ -6,9 +6,7 @@
  * Time: 2:02 PM
  */
 
-use Spipu\Html2Pdf\Html2Pdf;
-use Spipu\Html2Pdf\Exception\Html2PdfException;
-use Spipu\Html2Pdf\Exception\ExceptionFormatter;
+use Dompdf\Dompdf;
 
 class dhprg_create_pdfs_from_images {
 	protected $images_to_convert = array();
@@ -37,11 +35,10 @@ class dhprg_create_pdfs_from_images {
 	}
 
 	protected function template($path){
-		$output = "<page backtop=\"9mm\" backbottom=\"9mm\" backleft=\"9mm\" backright=\"9mm\">";
-		$output .= "<page_header>Damson Homes Report</page_header>\n\n";
-		$output .= "<img src='$path' style='max-width:100%; height:auto;'>";
-		$output .= "<page_footer>Rick says Hi!</page_footer>";
-		$output .= "</page>";
+		$output = $this->output_css();
+		$output .= "<div class='container'>";
+		$output .= "<img src=\"$path\">";
+		$output .= "</div>";
 		return $output;
 	}
 
@@ -49,18 +46,27 @@ class dhprg_create_pdfs_from_images {
 
 	protected function print_single_pdf($path, $save_path){
 		$content = $this->template($path);
+		$dompdf = new Dompdf();
+		$dompdf->loadHtml($content);
 
-		try {
+		// (Optional) Setup the paper size and orientation
+		$dompdf->setPaper('A4', 'portrait');
 
-			$html2pdf = new Html2Pdf('P', 'A4', 'en');
-			$html2pdf->setDefaultFont('Arial');
+		// Render the HTML as PDF
+		$dompdf->render();
+		// Output the generated PDF to Browser
+		$output = $dompdf->output();
+		file_put_contents($save_path, $output);
+	}
 
-			$html2pdf->writeHTML($content);
 
-			$html2pdf->output($save_path, 'F');
-		} catch (Html2PdfException $e) {
-			$formatter = new ExceptionFormatter($e);
-			echo $formatter->getHtmlMessage();
-		}
+	public function output_css() {
+		$output = "<style>
+			p {margin-top: 0;}
+		    .container{width:100%;}
+		    img{max-width:100%; height:auto;}
+        </style>\n";
+
+		return $output;
 	}
 }
