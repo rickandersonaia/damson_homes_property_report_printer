@@ -3,7 +3,7 @@
  * Plugin Name: Damson Homes Property Report Generator
  * Plugin URI:  https://github.com/rickandersonaia/damson_homes_property_report_printer
  * Description: Prints a formatted property report in PDF format including all media library attachments
- * Version:     0.0.1
+ * Version:     0.0.2
  * Author:      Rick Anderson
  * Author URI:  https://www.byobwebsite.com
  * Donate link: https://github.com/rickandersonaia/damson_homes_property_report_printer
@@ -14,7 +14,7 @@
  * @link    https://github.com/rickandersonaia/damson_homes_property_report_printer
  *
  * @package DH_Propery_Report_Generator
- * @version 0.0.1
+ * @version 0.0.2
  *
  */
 
@@ -47,55 +47,16 @@ use \setasign\Fpdi;
 
 final class DH_Propery_Report_Generator {
 
-	/**
-	 * Current version.
-	 *
-	 * @var    string
-	 * @since  0.0.1
-	 */
-	const VERSION = '0.0.1';
-	/**
-	 * Singleton instance of plugin.
-	 *
-	 * @var    DH_Propery_Report_Generator
-	 * @since  0.0.1
-	 */
+
+	const VERSION = '0.0.2';
 	protected static $single_instance = null;
 	public $post_id = 0;
-	/**
-	 * URL of plugin directory.
-	 *
-	 * @var    string
-	 * @since  0.0.1
-	 */
 	protected $url = '';
-	/**
-	 * Path of plugin directory.
-	 *
-	 * @var    string
-	 * @since  0.0.1
-	 */
 	protected $path = '';
-	/**
-	 * Plugin basename.
-	 *
-	 * @var    string
-	 * @since  0.0.1
-	 */
 	protected $basename = '';
-	/**
-	 * Detailed activation error messages.
-	 *
-	 * @var    array
-	 * @since  0.0.1
-	 */
 	protected $activation_errors = array();
 
-	/**
-	 * Sets up our plugin.
-	 *
-	 * @since  0.0.1
-	 */
+
 	protected function __construct() {
 		$this->basename = plugin_basename( __FILE__ );
 		$this->url      = plugin_dir_url( __FILE__ );
@@ -175,10 +136,22 @@ final class DH_Propery_Report_Generator {
 		}
 	}
 
+	/**
+	 * Create the uploads directory.
+	 *
+	 * @since  0.0.1
+	 */
+
 	public function create_directory($name){
 		$directory = new dhprg_create_directory("/dh_property_reports/$name/");
 		$directory->create_directory();
 	}
+
+	/**
+	 * Activate the plugin.
+	 *
+	 * @since  0.0.1
+	 */
 
 	public function _activate() {
 		$directory = new dhprg_create_directory('/dh_property_reports/');
@@ -209,20 +182,6 @@ final class DH_Propery_Report_Generator {
 	}
 
 	/**
-	 * Deactivates this plugin, hook this function on admin_init.
-	 *
-	 * @since  0.0.1
-	 */
-	public function deactivate_me() {
-
-		// We do a check for deactivate_plugins before calling it, to protect
-		// any developers from accidentally calling it too early and breaking things.
-		if ( function_exists( 'deactivate_plugins' ) ) {
-			deactivate_plugins( $this->basename );
-		}
-	}
-
-	/**
 	 * Creates or returns an instance of this class.
 	 *
 	 * @since   0.0.1
@@ -235,39 +194,6 @@ final class DH_Propery_Report_Generator {
 
 		return self::$single_instance;
 	}
-
-	/**
-	 * This plugin's directory.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       Directory and path.
-	 */
-	public static function dir( $path = '' ) {
-		static $dir;
-		$dir = $dir ? $dir : trailingslashit( dirname( __FILE__ ) );
-
-		return $dir . $path;
-	}
-
-	/**
-	 * This plugin's url.
-	 *
-	 * @since  0.0.1
-	 *
-	 * @param  string $path (optional) appended path.
-	 *
-	 * @return string       URL and path.
-	 */
-	public static function url( $path = '' ) {
-		static $url;
-		$url = $url ? $url : trailingslashit( plugin_dir_url( __FILE__ ) );
-
-		return $url . $path;
-	}
-
 
 	/**
 	 * Magic getter for our object.
