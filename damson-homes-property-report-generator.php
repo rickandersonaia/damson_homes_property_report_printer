@@ -3,18 +3,17 @@
  * Plugin Name: Damson Homes Property Report Generator
  * Plugin URI:  https://github.com/rickandersonaia/damson_homes_property_report_printer
  * Description: Prints a formatted property report in PDF format including all media library attachments
- * Version:     0.0.2
+ * Version:     0.0.3
  * Author:      Rick Anderson
  * Author URI:  https://www.byobwebsite.com
- * Donate link: https://github.com/rickandersonaia/damson_homes_property_report_printer
  * License:     GPLv2
- * Text Domain: damson-homes-property-report-generator
+ * Text Domain: dhprg
  * Domain Path: /languages
  *
  * @link    https://github.com/rickandersonaia/damson_homes_property_report_printer
  *
  * @package DH_Propery_Report_Generator
- * @version 0.0.2
+ * @version 0.0.3
  *
  */
 
@@ -48,7 +47,7 @@ use \setasign\Fpdi;
 final class DH_Propery_Report_Generator {
 
 
-	const VERSION = '0.0.2';
+	const VERSION = '0.0.3';
 	protected static $single_instance = null;
 	public $post_id = 0;
 	protected $url = '';
@@ -66,12 +65,12 @@ final class DH_Propery_Report_Generator {
 		define( 'INC_PATH', $this->path . 'includes/' );
 		define( 'REPORT_PATH', WP_CONTENT_DIR . '/uploads/dh_property_reports/' );
 
-		require_once( INC_PATH . 'dhprg_assemble_report_from_data.php' );
-		require_once( INC_PATH . 'dhprg_assemble_report_from_files.php' );
-		require_once( INC_PATH . 'dhprg_create_directory.php' );
-		require_once( INC_PATH . 'dhprg_sort_attachment_pdfs.php' );
-		require_once( INC_PATH . 'dhprg_create_images_from_pdfs.php');
-		require_once( INC_PATH . 'dhprg_create_pdfs_from_images.php');
+		require_once( INC_PATH . 'DHPRG_Assemble_Report_From_Data.php' );
+		require_once( INC_PATH . 'DHPRG_Assemble_Report_From_Files.php' );
+		require_once( INC_PATH . 'DHPRG_Create_Directory.php' );
+		require_once( INC_PATH . 'DHPRG_Sort_Attachment_PDFs.php' );
+		require_once( INC_PATH . 'DHPRG_Create_Images_From_PDFs.php' );
+		require_once( INC_PATH . 'DHPRG_Create_PDFs_From_Images.php' );
 		require_once( VENDOR_PATH . 'autoload.php' );
 
 		add_action( 'template_redirect', array( $this, 'build_report' ), 98 );
@@ -110,29 +109,31 @@ final class DH_Propery_Report_Generator {
 	 */
 	public function build_report() {
 		global $post;
-		$this->post_id = $post->ID;
+		$this->post_id   = $post->ID;
 		$converted_paths = array();
 
 		if ( isset( $_GET['output'] ) && $_GET['output'] == 'pdf' ) {
-			$this->create_directory($post->post_name);
-			$sorted = new dhprg_sort_attachment_pdfs($post->ID);
+			$this->create_directory( $post->post_name );
+			$sorted          = new DHPRG_Sort_Attachment_PDFs( $post->ID );
 			$sorted_pdf_list = $sorted->get_sorted_pdfs();
-			$ready_paths = !empty($sorted_pdf_list['ready']) ? $sorted_pdf_list['ready'] : array();
-			if(!empty($sorted_pdf_list['need_to_convert'])){
-				$images = new dhprg_create_images_from_pdfs($sorted_pdf_list['need_to_convert'], $post->post_name);
+			$ready_paths     = ! empty( $sorted_pdf_list['ready'] ) ? $sorted_pdf_list['ready'] : array();
+
+			if ( ! empty( $sorted_pdf_list['need_to_convert'] ) ) {
+				$images            = new DHPRG_Create_Images_From_PDFs( $sorted_pdf_list['need_to_convert'], $post->post_name );
 				$images_to_convert = $images->get_images();
-				$pdf_from_image = new dhprg_create_pdfs_from_images($images_to_convert);
-				$converted_paths = $pdf_from_image->generate_pdfs();
+				$pdf_from_image    = new DHPRG_Create_PDFs_From_Images( $images_to_convert );
+				$converted_paths   = $pdf_from_image->generate_pdfs();
 			}
-			$report_from_data = new dhprg_assemble_report_from_data( $post->ID );
+
+			$report_from_data = new DHPRG_Assemble_Report_From_Data( $post->ID );
 			$report_from_data->print_report();
 
 			$all_pages[0] = $report_from_data->saved_path;
-			$files = array_merge($all_pages, $ready_paths, $converted_paths);
+			$files        = array_merge( $all_pages, $ready_paths, $converted_paths );
 			//var_dump($files);
 
-			$report_from_files = new dhprg_assemble_report_from_files($post->ID);
-			$report_from_files->assemble_report($files);
+			$report_from_files = new DHPRG_Assemble_Report_From_Files( $post->ID );
+			$report_from_files->assemble_report( $files );
 		}
 	}
 
@@ -142,8 +143,8 @@ final class DH_Propery_Report_Generator {
 	 * @since  0.0.1
 	 */
 
-	public function create_directory($name){
-		$directory = new dhprg_create_directory("/dh_property_reports/$name/");
+	public function create_directory( $name ) {
+		$directory = new DHPRG_Create_Directory( "/dh_property_reports/$name/" );
 		$directory->create_directory();
 	}
 
@@ -154,7 +155,7 @@ final class DH_Propery_Report_Generator {
 	 */
 
 	public function _activate() {
-		$directory = new dhprg_create_directory('/dh_property_reports/');
+		$directory = new DHPRG_Create_Directory( '/dh_property_reports/' );
 		$directory->create_directory();
 	}
 

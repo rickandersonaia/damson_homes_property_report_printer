@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: ander
+ * User: Rick Anderson
  * Date: 10/14/2017
  * Time: 5:29 AM
  */
@@ -9,7 +9,7 @@
 
 use \setasign\Fpdi;
 
-class dhprg_assemble_report_from_files {
+class DHPRG_Assemble_Report_From_Files {
 
 	public $post_id = 0;
 
@@ -56,6 +56,6 @@ class dhprg_assemble_report_from_files {
 
 
 // Output the new PDF
-		$pdf->Output('I', $file_name);
+		$pdf->Output( 'I', $file_name );
 	}
 }

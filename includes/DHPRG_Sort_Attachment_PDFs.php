@@ -1,14 +1,14 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: ander
+ * User: Rick Anderson
  * Date: 10/16/2017
  * Time: 8:20 AM
  */
 
 use \setasign\Fpdi;
 
-class dhprg_sort_attachment_pdfs {
+class DHPRG_Sort_Attachment_PDFs {
 
 
 	public $post_id;

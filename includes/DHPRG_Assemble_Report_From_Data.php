@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: ander
+ * User: Rick Anderson
  * Date: 10/11/2017
  * Time: 9:29 AM
  */
@@ -9,7 +9,7 @@
 use Dompdf\Dompdf;
 
 
-class dhprg_assemble_report_from_data {
+class DHPRG_Assemble_Report_From_Data {
 
 	public $post_id = 0;
 	public $saved_path = '';
@@ -45,7 +45,7 @@ class dhprg_assemble_report_from_data {
 		$img_id = get_post_thumbnail_id( $this->post_id );
 		if ( $img_id ) {
 			$slide_att = wp_get_attachment_image_src( $img_id, 'letterbox-small' );
-			$path = get_attached_file( $img_id );
+			$path      = get_attached_file( $img_id );
 		}
 
 
@@ -54,7 +54,7 @@ class dhprg_assemble_report_from_data {
 		$output .= "<div class=\"header\">\n";
 		$output .= "<p class=\"title\">$title</p>\n";
 		$output .= "<p class=\"address\">{$address['ll_number']} {$address['ll_street']}, {$address['ll_area']}, {$address['ll_town']}, {$address['ll_postcode']}</p>\n</div>\n";
-		if($img_id){
+		if ( $img_id ) {
 			$output .= '<div class="ftr-image-wrap">';
 			$output .= '<img class="ftr-image" src="' . $path . '" width="' . $slide_att[1] . '" height="' . $slide_att[2] . '">';
 			$output .= '</div>';
@@ -85,18 +85,18 @@ class dhprg_assemble_report_from_data {
 
 	public function print_report() {
 
-			$content  = $this->assemble_report();
-			$dompdf = new Dompdf();
-			$dompdf->loadHtml($content);
+		$content = $this->assemble_report();
+		$dompdf  = new Dompdf();
+		$dompdf->loadHtml( $content );
 
-			// (Optional) Setup the paper size and orientation
-			$dompdf->setPaper('A4', 'portrait');
+		// (Optional) Setup the paper size and orientation
+		$dompdf->setPaper( 'A4', 'portrait' );
 
-			// Render the HTML as PDF
-			$dompdf->render();
-			// Output the generated PDF to Browser
-			$output = $dompdf->output();
-			file_put_contents($this->saved_path, $output);
+		// Render the HTML as PDF
+		$dompdf->render();
+		// Output the generated PDF to Browser
+		$output = $dompdf->output();
+		file_put_contents( $this->saved_path, $output );
 	}
 
 	public function output_css() {
